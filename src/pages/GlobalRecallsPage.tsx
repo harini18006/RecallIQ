@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { DEMO_RECALLS } from '../data/mockRecalls';
 import { ProductCategory, RecallRecord } from '../types';
 import { 
   Search, Filter, Database, MapPin, Calendar, Tag, ExternalLink, 
-  AlertOctagon, CheckCircle2, ChevronRight, ShieldCheck, ArrowUpDown 
+  AlertOctagon, CheckCircle2, ChevronRight, ShieldCheck, ArrowUpDown, History 
 } from 'lucide-react';
 
 export const GlobalRecallsPage: React.FC = () => {
   const { setSelectedRecallForModal, executeScanAndVerify } = useApp();
+  const { logSearch, user, searchLogs, setIsSearchLogsModalOpen } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -31,6 +33,21 @@ export const GlobalRecallsPage: React.FC = () => {
       return matchesSearch && matchesCat && matchesCountry && matchesSev;
     });
   }, [searchTerm, selectedCategory, selectedCountry, selectedSeverity]);
+
+  // Automatically log searches to user's single row in JSON format (debounced)
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      const timer = setTimeout(() => {
+        logSearch(searchTerm.trim(), 'bulletin_search', {
+          category: selectedCategory,
+          country: selectedCountry,
+          severity: selectedSeverity,
+          resultsCount: filteredRecalls.length
+        });
+      }, 750);
+      return () => clearTimeout(timer);
+    }
+  }, [searchTerm, selectedCategory, selectedCountry, selectedSeverity, logSearch, filteredRecalls.length]);
 
   return (
     <div className="min-h-screen bg-ivory-100 text-charcoal-800 font-sans py-10">
@@ -129,6 +146,30 @@ export const GlobalRecallsPage: React.FC = () => {
                 <option value="Class III">Class III (Low Risk)</option>
               </select>
             </div>
+          </div>
+
+          {/* User Row JSON Log Status Bar */}
+          <div className="pt-2 border-t border-warmgrey-200 flex flex-wrap items-center justify-between text-[11px] font-mono text-charcoal-600 gap-2">
+            <div className="flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5 text-forest-green" />
+              <span>
+                Supabase Row Logging: {user ? (
+                  <strong className="text-charcoal-900">Active for {user.email} (Single-Row JSON)</strong>
+                ) : (
+                  <span className="text-charcoal-500">Sign in to save searches directly into your Supabase row</span>
+                )}
+              </span>
+            </div>
+            {user && (
+              <button
+                type="button"
+                onClick={() => setIsSearchLogsModalOpen(true)}
+                className="flex items-center gap-1 text-safety-orange hover:underline font-semibold"
+              >
+                <History className="w-3 h-3" />
+                <span>Inspect Row JSON Logs ({searchLogs.length})</span>
+              </button>
+            )}
           </div>
         </div>
 

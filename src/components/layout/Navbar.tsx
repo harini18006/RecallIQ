@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Scan, Database, Archive, Mic, Menu, X, ArrowUpRight, Radio } from 'lucide-react';
 import { useApp, PageTab } from '../../context/AppContext';
+import { UserMenu } from '../auth/UserMenu';
 
 export const Navbar: React.FC = () => {
   const { activeTab, setActiveTab, savedVault } = useApp();
@@ -29,10 +30,12 @@ export const Navbar: React.FC = () => {
             <span className="hidden md:inline text-charcoal-300">SYNCHRONIZED WITH FDA • CPSC • EU SAFETY GATE • HEALTH CANADA • FSA</span>
           </div>
           <div className="flex items-center gap-3 text-charcoal-300">
-            <span className="hidden sm:inline">RAG ENGINE: GROQ LPU (QWEN-27B)</span>
+            <span className="hidden sm:inline">DB: SUPABASE JSON-ROW</span>
+            <span className="hidden sm:inline">|</span>
+            <span className="hidden md:inline">RAG ENGINE: GROQ (QWEN-27B)</span>
             <span className="text-safety-orange font-semibold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-forest-green animate-pulse"></span>
-              LIVE RAG ACTIVE
+              LIVE ACTIVE
             </span>
           </div>
         </div>
@@ -128,8 +131,9 @@ export const Navbar: React.FC = () => {
           </button>
         </nav>
 
-        {/* Action Button */}
+        {/* Action Button & User Profile */}
         <div className="hidden sm:flex items-center gap-3">
+          <UserMenu />
           <button
             onClick={() => handleNavClick('scanner')}
             className="flex items-center gap-2 px-4 py-2.5 bg-safety-orange text-white text-sm font-semibold rounded-sm hover:bg-safety-orange-hover transition-all shadow-sm active:translate-y-0.5"
@@ -197,7 +201,10 @@ export const Navbar: React.FC = () => {
             <Mic className="w-4 h-4 text-safety-orange" />
             Voice Safety Assistant (Tamil / Hindi / English)
           </button>
-          <div className="pt-2 border-t border-warmgrey-200">
+          <div className="pt-2 border-t border-warmgrey-200 space-y-2">
+            <div className="flex justify-center pb-1">
+              <UserMenu />
+            </div>
             <button
               onClick={() => handleNavClick('scanner')}
               className="w-full py-2.5 bg-safety-orange text-white text-sm font-semibold rounded-sm text-center flex items-center justify-center gap-2"

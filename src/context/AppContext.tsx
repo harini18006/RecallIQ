@@ -3,6 +3,8 @@ import { ScannedProduct, MatchAnalysis, RecallRecord, VaultItem, SafetyStatusTyp
 import { DEMO_RECALLS, SAMPLE_PRODUCTS } from '../data/mockRecalls';
 import { verifyProductAgainstRecalls } from '../services/fuzzyMatcher';
 import { verifyProductWithGroqRag, GROQ_MODEL } from '../services/groqRagService';
+import { searchLogService } from '../services/searchLogService';
+import { authService } from '../services/authService';
 
 export interface ToastNotification {
   id: string;
@@ -152,6 +154,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const filtered = prev.filter(p => p.id !== product.id);
       return [product, ...filtered].slice(0, 10);
     });
+
+    // Save scan query to user's dedicated Supabase DB row in JSON format
+    const activeSession = authService.getCurrentSession();
+    if (activeSession?.id) {
+      searchLogService.appendSearchLog(activeSession.id, {
+        query: product.name,
+        type: 'product_scan',
+        category: product.category,
+        metadata: {
+          brand: product.brand,
+          batchNumber: product.batchNumber,
+          barcode: product.barcode,
+          mfgDate: product.mfgDate
+        }
+      }).catch(err => console.warn('Could not append scan log to user row', err));
+    }
 
     setActiveTab('report');
   };

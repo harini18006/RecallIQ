@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, QrCode, Barcode, Upload, RefreshCw, Check, Sparkles, AlertCircle, FileSearch, Zap, Eye } from 'lucide-react';
+import { Camera, QrCode, Barcode, Upload, RefreshCw, Check, Sparkles, AlertCircle, FileSearch, Zap, Eye, Lock, LogIn } from 'lucide-react';
 import { ScannedProduct } from '../../types';
 import { SAMPLE_PRODUCTS } from '../../data/mockRecalls';
 import { scanPackagingImageWithGroqVision } from '../../services/groqVisionService';
+import { useAuth } from '../../context/AuthContext';
+import { useApp } from '../../context/AppContext';
 
 interface CameraScannerProps {
   onProductIdentified: (product: ScannedProduct) => void;
@@ -15,6 +17,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   onInstantVerifyReport,
   isAnalyzing
 }) => {
+  const { user, setIsAuthModalOpen } = useAuth();
+  const { addToast } = useApp();
+
   const [activeMode, setActiveMode] = useState<'camera' | 'upload'>('upload');
   const [cameraActive, setCameraActive] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -26,6 +31,20 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPresetIndex, setSelectedPresetIndex] = useState<number>(0);
+
+  // Guard function to ensure only authenticated users can upload or scan packaging photos
+  const requireAuth = (actionDescription: string = 'upload or scan packaging photos'): boolean => {
+    if (!user) {
+      addToast(
+        'Authentication Required',
+        `Please sign in or register to ${actionDescription}.`,
+        'warning'
+      );
+      setIsAuthModalOpen(true);
+      return false;
+    }
+    return true;
+  };
 
   // Initialize webcam if camera mode selected
   useEffect(() => {
@@ -60,6 +79,10 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   // Core Groq Vision AI scan execution
   const processImageWithAI = async (imageDataUrl: string, fallbackSample?: ScannedProduct, autoVerify: boolean = false) => {
+    if (!requireAuth('run AI vision packaging analysis')) {
+      return;
+    }
+
     setIsVisionScanning(true);
     setVisionStatusText('Groq Vision AI (qwen/qwen3.8-27b) analyzing packaging...');
 
@@ -93,6 +116,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   // Capture current webcam frame
   const handleCaptureCamera = () => {
+    if (!requireAuth('capture live camera image')) {
+      return;
+    }
     if (videoRef.current && cameraActive) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth || 640;
@@ -112,6 +138,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   // Image Upload handler
   const handleFileUpload = (file: File) => {
+    if (!requireAuth('upload packaging images')) {
+      return;
+    }
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
@@ -223,6 +252,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             onDrop={(e) => {
               e.preventDefault();
               setDragOver(false);
+              if (!requireAuth('upload packaging images')) {
+                return;
+              }
               const file = e.dataTransfer.files?.[0];
               if (file) handleFileUpload(file);
             }}
@@ -232,6 +264,10 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               type="file" 
               ref={fileInputRef} 
               onChange={(e) => {
+                if (!requireAuth('upload packaging images')) {
+                  e.target.value = '';
+                  return;
+                }
                 const file = e.target.files?.[0];
                 if (file) handleFileUpload(file);
               }} 
@@ -240,40 +276,87 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             />
 
             <div className="max-w-md w-full flex flex-col items-center">
-              {/* Image Preview Box */}
-              <div className="relative mb-4 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              {/* Image Preview Box with Auth Guard */}
+              <div 
+                className="relative mb-4 group cursor-pointer" 
+                onClick={() => {
+                  if (requireAuth('upload packaging images')) {
+                    fileInputRef.current?.click();
+                  }
+                }}
+              >
                 <img 
                   src={previewImage} 
                   alt="Packaging preview" 
                   className={`w-64 h-48 object-cover rounded-xs border-2 transition-all shadow-technical-md ${
                     dragOver ? 'border-safety-orange scale-102' : 'border-charcoal-600 hover:border-safety-orange'
-                  }`}
+                  } ${!user ? 'opacity-70 grayscale-30' : ''}`}
                 />
-                <div className="absolute inset-0 bg-charcoal-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xs">
-                  <span className="text-xs font-mono font-bold text-white bg-charcoal-900/80 px-3 py-1.5 rounded-xs border border-charcoal-500">
-                    CLICK TO CHANGE IMAGE
-                  </span>
-                </div>
+
+                {!user ? (
+                  <div className="absolute inset-0 bg-charcoal-900/80 backdrop-blur-xs flex flex-col items-center justify-center p-4 rounded-xs text-center z-10">
+                    <div className="w-10 h-10 rounded-full bg-safety-orange/20 border border-safety-orange/40 flex items-center justify-center text-safety-orange mb-2">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-mono font-bold text-white uppercase tracking-wider mb-1">
+                      Image Upload Locked
+                    </span>
+                    <span className="text-[11px] font-mono text-charcoal-300 mb-3">
+                      Sign in required to upload packaging photos
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAuthModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 bg-safety-orange hover:bg-safety-orange-hover text-white text-xs font-mono font-bold uppercase rounded-xs transition-colors flex items-center gap-1.5"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Sign In to Upload</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-charcoal-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xs">
+                    <span className="text-xs font-mono font-bold text-white bg-charcoal-900/80 px-3 py-1.5 rounded-xs border border-charcoal-500">
+                      CLICK TO CHANGE IMAGE
+                    </span>
+                  </div>
+                )}
               </div>
 
               <h4 className="text-base font-bold text-white mb-1">
-                Drop Packaging Photo or Click to Upload
+                {user ? 'Drop Packaging Photo or Click to Upload' : 'Packaging Image Upload (Auth Required)'}
               </h4>
               <p className="text-xs text-charcoal-400 mb-4 leading-relaxed max-w-sm">
-                RecallIQ&rsquo;s Groq Vision AI scans the physical box or bottle, extracts the brand, model, batch/lot code, and cross-checks recalls instantly.
+                {user ? (
+                  <>RecallIQ&rsquo;s Groq Vision AI scans the physical box or bottle, extracts the brand, model, batch/lot code, and cross-checks recalls instantly.</>
+                ) : (
+                  <>You must be signed in to upload custom packaging photos. Once signed in, all your image scans are saved to your dedicated database row in JSON format.</>
+                )}
               </p>
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                  onClick={() => {
+                    if (requireAuth('upload packaging images')) {
+                      fileInputRef.current?.click();
+                    }
+                  }}
                   className="px-4 py-2 bg-charcoal-800 hover:bg-charcoal-700 text-xs font-mono text-white rounded-xs border border-charcoal-600 transition-colors flex items-center gap-1.5"
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>SELECT IMAGE FILE</span>
+                  {user ? <Upload className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-safety-orange" />}
+                  <span>{user ? 'SELECT IMAGE FILE' : 'SIGN IN TO UPLOAD'}</span>
                 </button>
 
                 <button
-                  onClick={() => processImageWithAI(previewImage, SAMPLE_PRODUCTS[selectedPresetIndex], false)}
+                  type="button"
+                  onClick={() => {
+                    if (requireAuth('run AI vision packaging analysis')) {
+                      processImageWithAI(previewImage, SAMPLE_PRODUCTS[selectedPresetIndex], false);
+                    }
+                  }}
                   className="px-4 py-2 bg-safety-orange hover:bg-safety-orange-hover text-xs font-mono font-bold text-white rounded-xs transition-colors flex items-center gap-1.5"
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -350,6 +433,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           </div>
           <button
             onClick={() => {
+              if (!requireAuth('run AI scan & extraction')) return;
               if (activeMode === 'camera' && cameraActive) handleCaptureCamera();
               else processImageWithAI(previewImage, SAMPLE_PRODUCTS[selectedPresetIndex], false);
             }}

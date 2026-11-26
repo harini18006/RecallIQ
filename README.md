@@ -93,4 +93,38 @@ npm run preview
 - **Icons:** Lucide React
 - **Animations:** Framer Motion & CSS keyframe scanline
 - **Speech Engine:** Web Speech API (Recognition + Synthesis)
-- **Backend Architecture:** Modular, API-ready architecture structured for Supabase.
+- **Database & Auth:** Supabase (PostgreSQL with JSONB Single-Row Architecture) & Direct DB Auth (No email verification gate required)
+
+---
+
+## 🗄️ Supabase Database & Single-Row JSON Search Logging
+
+RecallIQ utilizes Supabase directly as its primary database without requiring complex email confirmation/verification flows.
+
+### Architecture Highlights:
+- **Direct DB Auth:** Users sign up with their credentials, and their record is immediately created in the `app_users` table with password hashing.
+- **Single-Row JSON Storage:** Rather than generating a separate table row for each individual search, **each user has their own single row** in `app_users`.
+- **JSON Column (`search_logs`):** All searches, keyword queries, category filters, and product scans are appended to that single user's `search_logs` JSONB array column:
+  ```json
+  [
+    {
+      "id": "log_1718293812_a8f9",
+      "timestamp": "2026-11-26T16:00:00.000Z",
+      "query": "Infant Formula",
+      "type": "bulletin_search",
+      "metadata": {
+        "category": "Infant & Child Care",
+        "resultsCount": 4
+      }
+    }
+  ]
+  ```
+
+### Setting up Supabase:
+1. Run the script in `supabase_schema.sql` in your Supabase project's **SQL Editor**.
+2. Add your Supabase credentials to `.env`:
+   ```bash
+   VITE_SUPABASE_URL=https://your-project.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+3. Restart Vite (`npm run dev`). RecallIQ will now synchronize all user registrations, logins, and search logs directly into your Supabase database table!

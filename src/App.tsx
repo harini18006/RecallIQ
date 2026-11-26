@@ -1,9 +1,12 @@
 import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ToastContainer } from './components/common/ToastContainer';
 import { RecallDetailModal } from './components/common/RecallDetailModal';
+import { AuthModal } from './components/auth/AuthModal';
+import { SearchLogsModal } from './components/auth/SearchLogsModal';
 
 // Pages
 import { LandingPage } from './pages/LandingPage';
@@ -39,14 +42,20 @@ const AppContent: React.FC = () => {
         recall={selectedRecallForModal}
         onClose={() => setSelectedRecallForModal(null)}
       />
+
+      {/* Direct Database Auth & Single-Row JSON Logs Modals */}
+      <AuthModal />
+      <SearchLogsModal />
     </div>
   );
 };
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </AuthProvider>
   );
 }
