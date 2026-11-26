@@ -1,0 +1,134 @@
+.app-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 9999px;
+  margin-bottom: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge {
+    background: #1e293b;
+    color: #818cf8;
+  }
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #161b22;
+    border-color: #30363d;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.counter-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.counter-value {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #2563eb;
+  line-height: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .counter-value {
+    color: #38bdf8;
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+}
+
+button {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background-color: #2563eb;
+  color: #ffffff;
+  transition: all 0.15s ease-in-out;
+}
+
+button:hover {
+  background-color: #1d4ed8;
+}
+
+button.secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+button.secondary:hover {
+  background-color: #cbd5e1;
+}
+
+@media (prefers-color-scheme: dark) {
+  button.secondary {
+    background-color: #21262d;
+    color: #c9d1d9;
+    border-color: #30363d;
+  }
+  button.secondary:hover {
+    background-color: #30363d;
+  }
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+code {
+  background: rgba(125, 125, 125, 0.15);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85em;
+}
+
+.app-footer {
+  font-size: 0.9rem;
+  color: #64748b;
+}
